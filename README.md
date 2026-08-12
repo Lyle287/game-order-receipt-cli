@@ -54,7 +54,7 @@ MIT
 
 ## Before this ships: Game Order Receipt CLI
 
-That's the minimal version. Before running this for real: The details below apply to Game Order Receipt CLI.
+That's the minimal version. Before running this for real, the details below apply to Game Order Receipt CLI.
 
 **Account & key**
 
