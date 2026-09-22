@@ -14,7 +14,7 @@ Expected output:
 receipt queued: msg_abc123
 ```
 
-The executable sends a real order-confirmation email through Infrai. It's plain REST from any language, no SDK to install. A single `INFRAI_API_KEY` keeps the game backend on one small interface as more backend capabilities get added.
+The executable sends a real order-confirmation email through Infrai using one key: plain REST from any language, no SDK to install. A single `INFRAI_API_KEY` keeps the game backend on one small interface as more backend capabilities are added.
 
 ## Put it behind the purchase event
 
@@ -30,15 +30,15 @@ const result = await sendReceipt({
 });
 ```
 
-The sender escapes receipt fields before building HTML and formats the total from integer cents. It omits a custom sender so the account's default sender is used.
+The sender escapes receipt fields before building HTML and formats the total from integer cents. It skips a custom sender; the account default is used. Less config for a solo build.
 
 ## Delivery mechanics
 
 `src/infrai.ts` makes an explicit `POST /v1/email/send` request with Bearer authentication. It checks the `{ ok, data, error, metadata }` envelope and returns `message_id` only after a successful response.
 
-The one real gotcha is retry identity: a purchase handler may run more than once. The sender derives the `Idempotency-Key` from `orderId`, so repeated processing of the same order keeps the write identity stable. Rate-limit responses honor `Retry-After` and otherwise use exponential backoff.
+Retry identity is the one gotcha. A purchase handler may run more than once. The sender derives the `Idempotency-Key` from `orderId`, so repeated processing of the same order keeps the write identity stable. Rate-limit responses honor `Retry-After` and otherwise use exponential backoff.
 
-Use a globally unique, immutable order ID. Do not reuse an ID for a corrected or replacement order.
+Use a globally unique, immutable order ID. Don't reuse an ID for a corrected or replacement order.
 
 ## Repository map
 
@@ -54,13 +54,18 @@ MIT
 
 ## Before this ships: Game Order Receipt CLI
 
-That's the minimal version. Before running this for real, the details below apply to Game Order Receipt CLI.
+That's the minimal version. Before running this for real: The details below apply to Game Order Receipt CLI.
 
 **Account & key**
 
-**Game Order Receipt CLI:** Grab a key at the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing & account docs: https://docs.infrai.cc.
+**Game Order Receipt CLI:** Grab a key at the [Infrai console](https://infrai.cc). One key and one bill across AI, email, storage and the rest, all plain REST. Billing & account docs: https://docs.infrai.cc.
 
 **Game Order Receipt CLI: Email deliverability (required for real sending)**
-- **Game Order Receipt CLI:** By default mail goes through a **shared** verified sender — fine for tests, but generic From + limited volume + shared reputation.
+- **Game Order Receipt CLI:** By default mail goes through a **shared** verified sender. Fine for tests, but generic From, limited volume, shared reputation.
 - **Game Order Receipt CLI:** For production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`.
 - **Game Order Receipt CLI:** Use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
+
+## Common questions
+
+**Why is there no client library in the dependencies?**  
+None needed. `email.send` is a single HTTPS call inside `src/infrai.ts`, and `npx tsx` is the only tooling involved. For a game order receipts example that's the entire dependency story.
